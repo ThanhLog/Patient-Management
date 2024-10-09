@@ -93,9 +93,12 @@ def generate_patient_data(num_patients):
         treatment_cost = round(
             random.uniform(100, 5000), 2
         )  # Chi phí điều trị từ 100 đến 5000
-        admission_date = datetime.now() - timedelta(
-            days=random.randint(1, 30)
-        )  # Ngày nhập viện trong 30 ngày qua
+
+        # Ngày nhập viện trong 30 ngày qua
+        admission_date = datetime.now() - timedelta(days=random.randint(1, 30))
+
+        # Tính ngày xuất viện ít nhất sau 7 ngày kể từ ngày nhập viện
+        discharge_date = admission_date + timedelta(days=random.randint(7, 14))
 
         # Chọn ngẫu nhiên khoa từ mảng
         department = random.choice(departments)
@@ -123,6 +126,7 @@ def generate_patient_data(num_patients):
             "sex": sex,
             "treatment_cost": treatment_cost,
             "admission_date": admission_date.strftime("%Y-%m-%d"),
+            "discharge_date": discharge_date.strftime("%Y-%m-%d"),  # Ngày xuất viện
             "department": department["name"],  # Lưu tên khoa phụ trách
         }
 

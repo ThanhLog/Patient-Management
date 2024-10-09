@@ -1,13 +1,13 @@
 <template>
-  <div class=" relative bg-gray-100 h-[1000vh]">
-    <MenuVue />
+  <div class=" relative bg-gray-100">
+    <CreateChart />
   </div>
 </template>
 
 <script>
-import MenuVue from './components/MenuVue.vue'
+import CreateChart from './components/CreateChart.vue'
 export default {
-  components: { MenuVue },
+  components: { CreateChart },
 
 }
 </script>
