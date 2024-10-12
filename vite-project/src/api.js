@@ -46,4 +46,11 @@ export default {
       }
     );
   },
+
+  getPatients({ department_name, disease_name }) {
+    return apiClient.post("/api/patients", {
+      department_name, 
+      disease_name,
+    });
+  },
 };

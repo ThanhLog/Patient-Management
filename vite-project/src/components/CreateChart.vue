@@ -70,14 +70,35 @@
       </div>
     </div>
 
-    <div class=" relative">
-      <select v-if="isBedCapacitySelected" v-model="selectedTimeRange" class=" absolute top-0 right-0 m-3" @change="fetchBedOccupancy">
-        <option value="1_Week" selected>1 Tuần</option>
-        <option value="1_Month">1 Tháng</option>
-        <option value="3_Month">3 Tháng</option>
-        <option value="6_Month">6 Tháng</option>
-      </select>
-      <img v-if="chartImage" :src="chartImage" alt="">
+    <div class=" bg-white flex">
+      <div class=" relative w-[70%]">
+        <select v-if="isBedCapacitySelected" v-model="selectedTimeRange" class=" absolute top-0 right-0 m-3"
+          @change="fetchBedOccupancy">
+          <option value="1_Week" selected>1 Tuần</option>
+          <option value="1_Month">1 Tháng</option>
+          <option value="3_Month">3 Tháng</option>
+          <option value="6_Month">6 Tháng</option>
+        </select>
+        <img v-if="chartImage" :src="chartImage" alt="">
+      </div>
+
+      <!-- List bệnh nhân -->
+      <div class=" w-[30%] border-l-2">
+        <h1 class=" text-4xl p-2 text-center font-semibold">Danh sách bệnh nhân </h1>
+
+        <div class="h-screen overflow-y-auto">
+          <div class=" m-2 p-2 border-2" v-for="item in listPatients" :key="item.name">
+            <p>Họ tên: {{ item.name }}</p>
+            <p>Giới tính: {{ item.sex }}</p>
+            <p>Tuổi: {{ item.age }}</p>
+            <p>Bệnh: {{ item.disease }}</p>
+            <p>Khoa: {{ item.department }}</p>
+            <p>Ngày nhập viện: {{ item.admission_date }}</p>
+            <p>Ngày ra viện: {{ item.discharge_date }}</p>
+            <p>Chi phí: {{ item.treatment_cost }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -90,6 +111,7 @@ export default {
     return {
       departments: [], // Danh sách khoa
       availableDiseases: [], // Danh sách bệnh đã chọn theo khoa
+      listPatients: [],
       selectedDepartment: "", // Khoa đã chọn
       selectDisease: "", // Bệnh đã chọn
       selectChart: "",
@@ -145,6 +167,27 @@ export default {
         })
         .catch(error => {
           console.error('Có lỗi khi gọi API:', error);
+        });
+    },
+
+    fetchBedOccupancy() {
+      const requestData = {
+        chart_type: 'line',
+        time_range: this.selectedTimeRange,
+        // Các tham số khác nếu cần
+      };
+
+      api.getBedOccupancy(requestData)
+        .then(response => {
+          const base64Image = btoa(
+            new Uint8Array(response.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
+
+          this.chartImage = `data:image/png;base64,${base64Image}`;
+          console.log("Dữ liệu công suất giường bệnh đã được tải thành công:", response.data);
+        })
+        .catch(error => {
+          console.error("Lỗi khi lấy dữ liệu công suất giường bệnh:", error);
         });
     },
 
@@ -212,6 +255,7 @@ export default {
         requestData.time_range = this.selectedTimeRange // Giá trị mặc định là 1 tuần
         requestData.chart_type = 'line'
 
+
         api.getBedOccupancy(requestData)
           .then(response => {
             if (response.data) {
@@ -232,27 +276,13 @@ export default {
         console.warn("Tùy chọn không hợp lệ. Vui lòng chọn biểu đồ phù hợp.");
         alert("Vui lòng chọn loại dữ liệu hợp lệ để hiển thị.");
       }
-    },
 
-    fetchBedOccupancy() {
-      const requestData = {
-        chart_type: 'line',
-        time_range: this.selectedTimeRange,
-        // Các tham số khác nếu cần
-      };
-
-      api.getBedOccupancy(requestData)
-        .then(response => {
-          const base64Image = btoa(
-            new Uint8Array(response.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
-
-          this.chartImage = `data:image/png;base64,${base64Image}`;
-          console.log("Dữ liệu công suất giường bệnh đã được tải thành công:", response.data);
-        })
-        .catch(error => {
-          console.error("Lỗi khi lấy dữ liệu công suất giường bệnh:", error);
-        });
+      api.getPatients(requestData).then(response => {
+        this.listPatients = response.data
+        console.log(response.data)
+      }).catch((e) => {
+        console.log(e)
+      })
     },
 
     renderChart() {

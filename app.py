@@ -23,11 +23,30 @@ def get_departments():
     departments = list(departments_collection.find({}, {"_id": 0}))
     return jsonify(departments)
     
+@app.route("/api/patients", methods=['POST'])
+def get_patients():
+    request_data = request.json
+    department_name = request_data.get("department_name")
+    disease_name = request_data.get("disease_name")
+
+    # Xây dựng query
+    query = {}
+    if disease_name:
+        query["disease"] = disease_name
+    if department_name:
+        query["department"] = department_name 
+
+    if query:
+        patients = list(patients_collection.find(query, {"_id": 0}))
+    else:
+        patients = list(patients_collection.find({}, {"_id": 0}))
+    return jsonify(patients)
+
 
 @app.route("/api/chart", methods=["POST"])
 def generate_chart():
     # Lấy dữ liệu từ yêu cầu POST
-    request_data = request.json  # Sử dụng request.json để lấy dữ liệu JSON
+    request_data = request.json
     chart_type = request_data.get("chart_type")
     data_type = request_data.get("data_type")
     department_name = request_data.get("department_name")
