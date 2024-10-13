@@ -35,6 +35,7 @@
                   <option value="" disabled selected> -- Chọn biểu đồ -- </option>
                   <option value="bar">Biểu đồ cột</option>
                   <option value="pie">Biểu đồ tròn</option>
+                  <option value="line">Biểu đồ đường</option>
                 </select>
               </div>
               <div class=" mt-3 flex gap-3">
@@ -49,6 +50,9 @@
             </div>
             <button @click="selectOption('bed_capacity')"
               class=" h-1/2 bg-gray-600 px-4 py-2 text-white font-semibold text-[12px] rounded-2xl">Công suất giường
+              bệnh</button>
+            <button @click="selectOption('disease_ratio')"
+              class=" h-1/2 bg-gray-600 px-4 py-2 text-white font-semibold text-[12px] rounded-2xl">Tỉ lệ mắc
               bệnh</button>
           </div>
         </div>
@@ -123,6 +127,7 @@ export default {
       isAgeDistributionSelected: false,
       isMedicalCostSelected: false,
       isBedCapacitySelected: false,
+      isDiseaseRatioSelected: false,
 
       chartData: null,
       timeRange: "1_Week"
@@ -137,6 +142,9 @@ export default {
       else if (this.selectChart == 'pie') {
         return 'Biểu đồ tròn'
       }
+      else if (this.selectChart == 'line') {
+        return 'Biểu đồ đường'
+      }
     },
 
     displayOptions() {
@@ -150,6 +158,10 @@ export default {
 
       if (this.isBedCapacitySelected) {
         return 'Công suất giường bệnh';
+      }
+
+      if (this.isDiseaseRatioSelected) {
+        return 'Tỷ lệ mắc bệnh';
       }
     }
   },
@@ -205,6 +217,7 @@ export default {
       this.isAgeDistributionSelected = (option === 'age_distribution');
       this.isMedicalCostSelected = (option === 'treatment_cost');
       this.isBedCapacitySelected = (option === 'bed_capacity');
+      this.isDiseaseRatioSelected = (option === 'disease_ratio')
     },
     resetData() {
       this.selectedDepartment = '';
@@ -231,7 +244,7 @@ export default {
 
       console.log(requestData)
       // Xử lý tùy chọn biểu đồ hoặc chi phí khám chữa bệnh
-      if (this.selectedOption === 'age_distribution' || this.selectedOption === 'treatment_cost') {
+      if (this.selectedOption === 'age_distribution') {
         api.getChartData(requestData)
           .then(response => {
             if (response.data) {
@@ -272,7 +285,45 @@ export default {
           .catch(error => {
             console.error("Lỗi khi lấy dữ liệu công suất giường bệnh:", error);
           });
-      } else {
+      } else if (this.selectedOption === "disease_ratio") {
+        api.getDiseaseRatio(requestData).then(
+          response => {
+            if (response.data) {
+              const reader = new FileReader();
+              reader.readAsDataURL(response.data); // Đọc file ảnh trả về từ API
+              reader.onloadend = () => {
+                this.chartImage = reader.result; // Chuyển đổi sang base64
+                this.renderChart(); // Vẽ biểu đồ
+                console.log("Dữ liệu tỷ lệ bệnh đã được tải thành công:", this.chartImage);
+              };
+            } else {
+              console.error("Không nhận được dữ liệu tỷ lệ bệnh từ API.");
+            }
+          }
+        ).catch(e => {
+          console.error("Lỗi khi lấy dữ liệu tỷ lệ bệnh:", e);
+        })
+      } else if (this.selectedOption === "treatment_cost") {
+        api.getTreamentCost(requestData)
+          .then(response => {
+            if (response.data) {
+              const reader = new FileReader();
+              reader.readAsDataURL(response.data); // Đọc file ảnh trả về từ API
+              reader.onloadend = () => {
+                this.chartImage = reader.result; // Chuyển đổi sang base64
+                this.renderChart(); // Vẽ biểu đồ
+                console.log("Dữ liệu biểu đồ đã được tải thành công:", this.chartImage);
+              };
+            } else {
+              console.error("Không nhận được dữ liệu biểu đồ từ API.");
+            }
+          })
+          .catch(error => {
+            console.error("Lỗi khi lấy dữ liệu biểu đồ:", error);
+          });
+
+      }
+      else {
         console.warn("Tùy chọn không hợp lệ. Vui lòng chọn biểu đồ phù hợp.");
         alert("Vui lòng chọn loại dữ liệu hợp lệ để hiển thị.");
       }

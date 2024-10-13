@@ -5,11 +5,17 @@ from flask_cors import CORS
 
 from charts.chart_ulits import create_bar_chart, create_line_chart, create_pie_chart
 from models.get_age_distribution import get_age_distribution
-from models.get_treatment_cost import get_treatment_cost
+
+# from models.get_treatment_cost import get_treatment_cost
 from models.bed_occupancy import calculate_bed_occupancy
+from models.get_disease_ratio import get_disease_ratio
+from models.get_treatment_cost import get_treatment_cost_by_department
+
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})  # Cho phép yêu cầu từ localhost:5173
+CORS(
+    app, resources={r"/api/*": {"origins": "http://localhost:5173"}}
+)  # Cho phép yêu cầu từ localhost:5173
 
 
 # Kết nối đến MongoDB
@@ -18,12 +24,14 @@ db = client["HospitalManagement"]
 patients_collection = db["Patients"]
 departments_collection = db["Departments"]
 
+
 @app.route("/api/departments", methods=["GET"])
 def get_departments():
     departments = list(departments_collection.find({}, {"_id": 0}))
     return jsonify(departments)
-    
-@app.route("/api/patients", methods=['POST'])
+
+
+@app.route("/api/patients", methods=["POST"])
 def get_patients():
     request_data = request.json
     department_name = request_data.get("department_name")
@@ -34,7 +42,7 @@ def get_patients():
     if disease_name:
         query["disease"] = disease_name
     if department_name:
-        query["department"] = department_name 
+        query["department"] = department_name
 
     if query:
         patients = list(patients_collection.find(query, {"_id": 0}))
@@ -52,12 +60,15 @@ def generate_chart():
     department_name = request_data.get("department_name")
     disease_name = request_data.get("disease_name")
 
-
     # Lấy dữ liệu từ MongoDB
     if data_type == "age_distribution":
-        data, custom_title = get_age_distribution(patients_collection, department_name, disease_name)
+        data, custom_title = get_age_distribution(
+            patients_collection, department_name, disease_name
+        )
     elif data_type == "treatment_cost":
-        data, custom_title = get_treatment_cost(patients_collection, department_name, disease_name)
+        data, custom_title = get_treatment_cost(
+            patients_collection, department_name, disease_name
+        )
     else:
         return jsonify({"error": "Invalid data type"}), 400
 
@@ -68,6 +79,53 @@ def generate_chart():
         img = create_pie_chart(data, custom_title)
     elif chart_type == "line":
         img = create_line_chart(data, custom_title)
+    else:
+        return jsonify({"error": "Invalid chart type"}), 400
+
+    return send_file(img, mimetype="image/png")
+
+
+@app.route("/api/disease-ratio", methods=["POST"])
+def disease_ratio_chart():
+    request_data = request.json
+    department_name = request_data.get("department_name")
+    chart_type = request_data.get("chart_type")
+
+    data, custom_title = get_disease_ratio(patients_collection, department_name)
+
+    if not data:
+        return jsonify({"error": "Không có dữ liệu bệnh nhân"}), 404
+
+    if chart_type == "bar":
+        img = create_bar_chart(data, custom_title)
+    elif chart_type == "pie":
+        img = create_pie_chart(data, custom_title)
+    elif chart_type == "line":
+        img = create_line_chart(data, custom_title)
+    else:
+        return jsonify({"error": "Invalid chart type"}), 400
+
+    return send_file(img, mimetype="image/png")
+
+
+@app.route("/api/treatment-cost-by-department", methods=["POST"])
+def treatment_cost_by_department_chart():
+    request_data = request.json
+    department_name = request_data.get("department_name")  # Có thể có hoặc không
+    chart_type = request_data.get("chart_type")
+
+    # Lấy dữ liệu chi phí điều trị theo bệnh của khoa
+    data, custom_title = get_treatment_cost_by_department(
+        patients_collection, department_name
+    )
+
+    # Vẽ biểu đồ dựa trên loại biểu đồ yêu cầu
+    if chart_type == "bar":
+        img = create_bar_chart(data, custom_title)
+    elif chart_type == "pie":
+        img = create_pie_chart(data, custom_title)
+    elif chart_type == "line":
+        img = create_line_chart(data, "Bệnh", "Chi phí điều trị", custom_title)
     else:
         return jsonify({"error": "Invalid chart type"}), 400
 

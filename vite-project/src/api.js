@@ -49,8 +49,34 @@ export default {
 
   getPatients({ department_name, disease_name }) {
     return apiClient.post("/api/patients", {
-      department_name, 
+      department_name,
       disease_name,
     });
+  },
+
+  getDiseaseRatio({ department_name, chart_type }) {
+    return apiClient.post(
+      "/api/disease-ratio",
+      {
+        department_name,
+        chart_type,
+      },
+      {
+        responseType: "blob", // Thiết lập responseType là blob
+      }
+    );
+  },
+
+  getTreamentCost({ department_name, chart_type }) {
+    return apiClient.post(
+      "/api/treatment-cost-by-department",
+      {
+        department_name,
+        chart_type,
+      },
+      {
+        responseType: "blob", // Thiết lập responseType là blob
+      }
+    );
   },
 };
