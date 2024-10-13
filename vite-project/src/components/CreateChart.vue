@@ -54,6 +54,9 @@
             <button @click="selectOption('disease_ratio')"
               class=" h-1/2 bg-gray-600 px-4 py-2 text-white font-semibold text-[12px] rounded-2xl">Tỉ lệ mắc
               bệnh</button>
+            <button @click="selectOption('patient_count')"
+              class=" h-1/2 bg-gray-600 px-4 py-2 text-white font-semibold text-[12px] rounded-2xl">Số lượng
+              bệnh nhân</button>
           </div>
         </div>
         <div class=" w-[30%] bg-white border-2">
@@ -128,6 +131,7 @@ export default {
       isMedicalCostSelected: false,
       isBedCapacitySelected: false,
       isDiseaseRatioSelected: false,
+      isPatientCount: false,
 
       chartData: null,
       timeRange: "1_Week"
@@ -162,6 +166,9 @@ export default {
 
       if (this.isDiseaseRatioSelected) {
         return 'Tỷ lệ mắc bệnh';
+      }
+      if (this.isPatientCount) {
+        return 'Số lượng bệnh nhân'
       }
     }
   },
@@ -218,6 +225,7 @@ export default {
       this.isMedicalCostSelected = (option === 'treatment_cost');
       this.isBedCapacitySelected = (option === 'bed_capacity');
       this.isDiseaseRatioSelected = (option === 'disease_ratio')
+      this.isPatientCount = (option === 'patient_count')
     },
     resetData() {
       this.selectedDepartment = '';
@@ -322,6 +330,24 @@ export default {
             console.error("Lỗi khi lấy dữ liệu biểu đồ:", error);
           });
 
+      } else if (this.selectedOption === "patient_count") {
+        api.getPatientCount(requestData).then(
+          response => {
+            if (response.data) {
+              const reader = new FileReader();
+              reader.readAsDataURL(response.data); // Đọc file ảnh trả về từ API
+              reader.onloadend = () => {
+                this.chartImage = reader.result; // Chuyển đổi sang base64
+                this.renderChart(); // Vẽ biểu đồ
+                console.log("Dữ liệu tỷ lệ bệnh đã được tải thành công:", this.chartImage);
+              };
+            } else {
+              console.error("Không nhận được dữ liệu tỷ lệ bệnh từ API.");
+            }
+          }
+        ).catch(e => {
+          console.error("Lỗi khi lấy dữ liệu tỷ lệ bệnh:", e);
+        })
       }
       else {
         console.warn("Tùy chọn không hợp lệ. Vui lòng chọn biểu đồ phù hợp.");

@@ -67,6 +67,19 @@ export default {
     );
   },
 
+  getPatientCount({ department_name, chart_type }) {
+    return apiClient.post(
+      "/api/patient-count",
+      {
+        department_name,
+        chart_type,
+      },
+      {
+        responseType: "blob", // Thiết lập responseType là blob
+      }
+    );
+  },
+
   getTreamentCost({ department_name, chart_type }) {
     return apiClient.post(
       "/api/treatment-cost-by-department",

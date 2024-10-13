@@ -10,7 +10,7 @@ from models.get_age_distribution import get_age_distribution
 from models.bed_occupancy import calculate_bed_occupancy
 from models.get_disease_ratio import get_disease_ratio
 from models.get_treatment_cost import get_treatment_cost_by_department
-
+from models.get_patient_quantity import get_patients_quantity
 
 app = Flask(__name__)
 CORS(
@@ -131,6 +131,29 @@ def treatment_cost_by_department_chart():
 
     return send_file(img, mimetype="image/png")
 
+
+@app.route("/api/patient-count", methods=["POST"])
+def patient_count():
+    request_data = request.json
+    department_name = request_data.get("department_name")
+    chart_type = request_data.get("chart_type")
+
+    data, custom_title = get_patients_quantity(patients_collection, department_name)
+
+    if not data:
+        return jsonify({"error": "Không có dữ liệu bệnh nhân"}), 404
+
+    # Vẽ biểu đồ dựa trên loại biểu đồ yêu cầu
+    if chart_type == "bar":
+        img = create_bar_chart(data, custom_title)
+    elif chart_type == "pie":
+        img = create_pie_chart(data, custom_title)
+    elif chart_type == "line":
+        img = create_line_chart(data, custom_title)
+    else:
+        return jsonify({"error": "Invalid chart type"}), 400
+
+    return send_file(img, mimetype="image/png")
 
 @app.route("/api/bed-occupancy", methods=["POST"])
 def bed_occupancy_chart():
